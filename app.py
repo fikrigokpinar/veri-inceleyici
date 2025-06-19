@@ -31,3 +31,33 @@ if uploaded_file is not None:
         st.error(f"Veri okunurken bir hata oluştu: {e}")
 else:
     st.info("Lütfen bir veri dosyası yükleyin.")
+import matplotlib.pyplot as plt
+
+st.subheader("📊 Grafiksel Görselleştirme")
+
+# Sadece sayısal değişkenleri al
+num_cols = df.select_dtypes(include='number').columns.tolist()
+
+if len(num_cols) > 0:
+    # Kullanıcıdan değişken seçmesini iste
+    selected_col = st.selectbox("Bir sayısal değişken seçin:", num_cols)
+
+    # Grafik türü seçimi
+    chart_type = st.radio("Grafik türü seçin:", ("Histogram", "Boxplot"))
+
+    # Grafik çizimi
+    fig, ax = plt.subplots()
+    if chart_type == "Histogram":
+        ax.hist(df[selected_col].dropna(), bins=20, color='skyblue', edgecolor='black')
+        ax.set_title(f"{selected_col} - Histogram")
+        ax.set_xlabel(selected_col)
+        ax.set_ylabel("Frekans")
+    else:  # Boxplot
+        ax.boxplot(df[selected_col].dropna(), vert=False)
+        ax.set_title(f"{selected_col} - Boxplot")
+        ax.set_xlabel(selected_col)
+
+    st.pyplot(fig)
+else:
+    st.info("Grafik için uygun sayısal sütun bulunamadı.")
+
