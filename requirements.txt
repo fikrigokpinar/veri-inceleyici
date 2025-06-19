@@ -1,4 +1,5 @@
 streamlit
 pandas
-openpyxl  # Excel dosyalarını okumak için gerekli
+openpyxl
 matplotlib
+scikit-learn
