@@ -171,3 +171,27 @@ else:
         st.warning("Bu kombinasyon için uygun grafik belirlenemedi.")
 
     st.pyplot(fig)
+
+# -------------------- 📊 Kategorik Değişken Frekans Tabloları --------------------
+
+st.subheader("📋 Kategorik Değişken Frekans Tabloları")
+
+cat_cols = df.select_dtypes(include='object').columns.tolist()
+
+if not cat_cols:
+    st.info("Veri kümesinde kategorik (object) türünde değişken bulunamadı.")
+else:
+    selected_cat = st.selectbox("Bir kategorik değişken seçin:", cat_cols, key="cat_freq")
+
+    freq_table = df[selected_cat].value_counts().reset_index()
+    freq_table.columns = [selected_cat, "Frekans"]
+
+    st.write("📊 Frekans Tablosu")
+    st.dataframe(freq_table)
+
+    fig, ax = plt.subplots()
+    freq_table.plot(kind='bar', x=selected_cat, y="Frekans", ax=ax, legend=False, color='orange', edgecolor='black')
+    ax.set_title(f"{selected_cat} - Frekans Dağılımı")
+    ax.set_ylabel("Frekans")
+    ax.set_xlabel(selected_cat)
+    st.pyplot(fig)
