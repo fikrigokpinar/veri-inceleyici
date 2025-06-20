@@ -418,11 +418,17 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
 
         if not filled_values.empty:
             # Boxplot
-            fig1, ax1 = plt.subplots()
-            sns.boxplot(data=[df_before[selected_col].dropna(), df_after[selected_col]], ax=ax1)
-            ax1.set_xticklabels(["Önce", "Sonra"])
-            ax1.set_title("Boxplot: Eksik Veri Doldurma Öncesi ve Sonrası")
-            st.pyplot(fig1)
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            # Eksik veriler doldurulmadan önceki ve sonraki dağılımları yan yana çiz
+            sns.boxplot(data=pd.DataFrame({
+            "Önce": df_before[selected_col].dropna(),
+            "Sonra": df_after[selected_col]
+                }), orient="v", ax=ax)
+
+            ax.set_title(f"{selected_col} - Eksik Veri Doldurma Öncesi ve Sonrası Boxplot")
+            st.pyplot(fig)
+
 
             # Histogram
             fig2, ax2 = plt.subplots()
