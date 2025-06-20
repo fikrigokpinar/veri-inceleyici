@@ -13,6 +13,34 @@ from sklearn.datasets import (
     load_iris, load_breast_cancer, load_digits, fetch_california_housing,
     make_blobs, make_regression
 )
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+# Fonksiyonlar
+def mape(y_true, y_pred):
+    return np.mean(np.abs((y_true - y_pred) / np.maximum(np.abs(y_true), 1e-8))) * 100
+
+def compare_imputation_methods(df_full, df_with_nan, methods):
+    mask = df_with_nan.isnull()
+    numeric_cols = df_full.select_dtypes(include='number').columns
+    results = []
+
+    for name, imputer in methods.items():
+        df_temp = df_with_nan.copy()
+        df_temp[numeric_cols] = imputer.fit_transform(df_temp[numeric_cols])
+        
+        for col in numeric_cols:
+            if mask[col].any():
+                y_true = df_full.loc[mask[col], col]
+                y_pred = df_temp.loc[mask[col], col]
+                
+                results.append({
+                    "Yöntem": name,
+                    "Değişken": col,
+                    "MAE": mean_absolute_error(y_true, y_pred),
+                    "MSE": mean_squared_error(y_true, y_pred),
+                    "MAPE (%)": mape(y_true, y_pred)
+                })
+
+    return pd.DataFrame(results)
 
 st.set_page_config(page_title="Veri Kümesi İnceleyici", layout="wide")
 st.title("📊 Veri Kümesi İnceleyici")
@@ -68,6 +96,7 @@ add_missing = st.checkbox("🔥 Yapay eksik veri ekle", value=True)
 missing_ratio = st.selectbox("Eksik veri oranı (p)", [0.05, 0.10, 0.15, 0.20], index=0, format_func=lambda x: f"%{int(x*100)}")
 
 df = get_builtin_dataset(dataset_name)
+df_clean = df.copy()  # Tam hali
 
 if add_missing and not df.empty:
     n_rows, n_cols = df.shape
@@ -81,6 +110,11 @@ if add_missing and not df.empty:
         i = np.random.randint(0, n_rows)
         j = np.random.randint(0, n_cols)
         df.iat[i, j] = np.nan
+# Eksik veri eklendikten hemen sonra:
+
+st.session_state["df_complete"] = df_clean
+st.session_state["df_with_nan"] = df.copy()
+
 
 
 
@@ -455,3 +489,34 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
         st.warning("Karşılaştırma için sayısal değişken bulunamadı.")
 else:
     st.info("Eksik veri doldurulmadan önce-sonra karşılaştırması yapılamaz.")
+
+# -------------------- 📈 Eksik Veri Doldurma Yöntemi Karşılaştırması --------------------
+if "df_complete" in st.session_state and "df_with_nan" in st.session_state:
+    st.subheader("📈 Eksik Veri Doldurma Yöntemlerinin Karşılaştırılması")
+
+    from sklearn.impute import SimpleImputer
+
+    methods = {
+        "Ortalama": SimpleImputer(strategy="mean"),
+        "Medyan": SimpleImputer(strategy="median"),
+        "KNN": KNNImputer(n_neighbors=3),
+        "Iterative (BayesianRidge)": IterativeImputer(random_state=0),
+        "Random Forest": IterativeImputer(estimator=RandomForestRegressor(n_estimators=10, random_state=0), random_state=0),
+        "XGBoost": IterativeImputer(estimator=XGBRegressor(n_estimators=10, verbosity=0, random_state=0), random_state=0)
+    }
+
+    df_full = st.session_state["df_complete"]
+    df_with_nan = st.session_state["df_with_nan"]
+
+    with st.spinner("Yöntemler test ediliyor..."):
+        comparison_df = compare_imputation_methods(df_full, df_with_nan, methods)
+        summary = comparison_df.groupby("Yöntem")[["MAE", "MSE", "MAPE (%)"]].mean().sort_values("MAE")
+
+    st.markdown("### 📋 Detaylı Karşılaştırma")
+    st.dataframe(comparison_df)
+
+    st.markdown("### 🏆 Ortalama Performans Karşılaştırması")
+    st.dataframe(summary)
+else:
+    st.info("Bu karşılaştırma yalnızca örnek veri kümesinde eksik değerler yapay olarak eklendiğinde mümkündür.")
+
