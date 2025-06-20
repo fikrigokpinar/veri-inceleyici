@@ -252,3 +252,137 @@ else:
     ax.set_title("Veri Kümesinde Eksik Gözlem Haritası")
     st.pyplot(fig)
 
+import pandas as pd
+import numpy as np
+from sklearn.impute import KNNImputer, IterativeImputer
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+
+# -----------------------------
+# Streamlit tarafında seçim menüsü
+st.subheader("📌 Eksik Veri Doldurma")
+
+impute_method = st.selectbox("Bir doldurma yöntemi seçin:", [
+    "🔹 Basit: Ortalama (Mean)",
+    "🔹 Basit: Medyan (Median)",
+    "🔹 Basit: Mod (Mode)",
+    "🔹 Basit: Forward Fill (ffill)",
+    "🔹 Basit: Backward Fill (bfill)",
+    "🔹 Basit: Doğrusal Enterpolasyon",
+    "🔸 Kural: kNN Imputation",
+    "🔸 Kural: Iterative Imputer",
+    "🔸 Kural: Regresyon Temelli",
+    "🟢 ML: Random Forest",
+    "🟢 ML: XGBoost",
+    "🟢 ML: LightGBM"
+])
+
+# -----------------------------
+# Eksik veri doldurma fonksiyonu
+
+def impute_data(df, method):
+    df_copy = df.copy()
+
+    if method == "🔹 Basit: Ortalama (Mean)":
+        return df_copy.fillna(df_copy.mean(numeric_only=True))
+
+    elif method == "🔹 Basit: Medyan (Median)":
+        return df_copy.fillna(df_copy.median(numeric_only=True))
+
+    elif method == "🔹 Basit: Mod (Mode)":
+        return df_copy.fillna(df_copy.mode().iloc[0])
+
+    elif method == "🔹 Basit: Forward Fill (ffill)":
+        return df_copy.fillna(method='ffill')
+
+    elif method == "🔹 Basit: Backward Fill (bfill)":
+        return df_copy.fillna(method='bfill')
+
+    elif method == "🔹 Basit: Doğrusal Enterpolasyon":
+        return df_copy.interpolate()
+
+    elif method == "🔸 Kural: kNN Imputation":
+        imputer = KNNImputer(n_neighbors=5)
+        df_copy[df_copy.select_dtypes(include=['number']).columns] = imputer.fit_transform(
+            df_copy.select_dtypes(include=['number']))
+        return df_copy
+
+    elif method == "🔸 Kural: Iterative Imputer":
+        imputer = IterativeImputer()
+        df_copy[df_copy.select_dtypes(include=['number']).columns] = imputer.fit_transform(
+            df_copy.select_dtypes(include=['number']))
+        return df_copy
+
+    elif method == "🔸 Kural: Regresyon Temelli":
+        for col in df_copy.columns:
+            if df_copy[col].isnull().sum() > 0:
+                not_null = df_copy[df_copy[col].notnull()]
+                is_null = df_copy[df_copy[col].isnull()]
+                X_train = not_null.drop(columns=[col]).select_dtypes(include=['number'])
+                y_train = not_null[col]
+                X_pred = is_null.drop(columns=[col]).select_dtypes(include=['number'])
+
+                if not X_pred.empty and not X_train.empty:
+                    model = LinearRegression()
+                    model.fit(X_train, y_train)
+                    df_copy.loc[df_copy[col].isnull(), col] = model.predict(X_pred)
+        return df_copy
+
+    elif method == "🟢 ML: Random Forest":
+        for col in df_copy.columns:
+            if df_copy[col].isnull().sum() > 0:
+                not_null = df_copy[df_copy[col].notnull()]
+                is_null = df_copy[df_copy[col].isnull()]
+                X_train = not_null.drop(columns=[col]).select_dtypes(include=['number'])
+                y_train = not_null[col]
+                X_pred = is_null.drop(columns=[col]).select_dtypes(include=['number'])
+
+                if not X_pred.empty and not X_train.empty:
+                    model = RandomForestRegressor()
+                    model.fit(X_train, y_train)
+                    df_copy.loc[df_copy[col].isnull(), col] = model.predict(X_pred)
+        return df_copy
+
+    elif method == "🟢 ML: XGBoost":
+        for col in df_copy.columns:
+            if df_copy[col].isnull().sum() > 0:
+                not_null = df_copy[df_copy[col].notnull()]
+                is_null = df_copy[df_copy[col].isnull()]
+                X_train = not_null.drop(columns=[col]).select_dtypes(include=['number'])
+                y_train = not_null[col]
+                X_pred = is_null.drop(columns=[col]).select_dtypes(include=['number'])
+
+                if not X_pred.empty and not X_train.empty:
+                    model = XGBRegressor()
+                    model.fit(X_train, y_train)
+                    df_copy.loc[df_copy[col].isnull(), col] = model.predict(X_pred)
+        return df_copy
+
+    elif method == "🟢 ML: LightGBM":
+        for col in df_copy.columns:
+            if df_copy[col].isnull().sum() > 0:
+                not_null = df_copy[df_copy[col].notnull()]
+                is_null = df_copy[df_copy[col].isnull()]
+                X_train = not_null.drop(columns=[col]).select_dtypes(include=['number'])
+                y_train = not_null[col]
+                X_pred = is_null.drop(columns=[col]).select_dtypes(include=['number'])
+
+                if not X_pred.empty and not X_train.empty:
+                    model = LGBMRegressor()
+                    model.fit(X_train, y_train)
+                    df_copy.loc[df_copy[col].isnull(), col] = model.predict(X_pred)
+        return df_copy
+
+    else:
+        return df_copy
+
+# -----------------------------
+# Uygulama: Eğer eksik veri varsa kullanıcıdan seçim al, uygula
+
+if df.isnull().sum().sum() > 0:
+    if st.button("Eksik Verileri Doldur"):
+        df = impute_data(df, impute_method)
+        st.success("✔ Eksik veriler dolduruldu.")
+
