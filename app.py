@@ -60,13 +60,19 @@ else:
     df = get_builtin_dataset(dataset_name)
 
     # Eksik veri ekleme burada opsiyonel
-    if add_missing and not df.empty:
-        import numpy as np
-        n_rows = df.shape[0]
-        n_missing = max(1, int(n_rows * 0.05))
-        for col in df.select_dtypes(include='number').columns[:2]:
-            missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
-            df.loc[missing_indices, col] = np.nan
+
+
+if add_missing and not df.empty:
+    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+    n_cols_to_modify = max(1, len(numeric_cols) // 2)  # Sütunların yarısı kadarını seç (en az 1)
+    selected_cols = np.random.choice(numeric_cols, size=n_cols_to_modify, replace=False)
+
+    n_rows = df.shape[0]
+    n_missing = max(1, int(n_rows * 0.05))  # Satırların %5’ine eksiklik eklenecek
+
+    for col in selected_cols:
+        missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
+        df.loc[missing_indices, col] = np.nan
 
 
 # -------------------- ANALİZ --------------------
