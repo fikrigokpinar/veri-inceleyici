@@ -455,25 +455,25 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
             filled_values = df_after.loc[mask_missing, selected_col]
 
             if not filled_values.empty:
-            # Boxplot
-            fig, ax = plt.subplots(figsize=(8, 5))
-            sns.boxplot(data=pd.DataFrame({
-                "Önce": df_before[selected_col].dropna(),
-                "Sonra": df_after[selected_col]
-            }), orient="v", ax=ax)
-            ax.set_title(f"{selected_col} - Eksik Veri Doldurma Öncesi ve Sonrası Boxplot")
-            st.pyplot(fig)
+                # Boxplot
+                fig, ax = plt.subplots(figsize=(8, 5))
+                sns.boxplot(data=pd.DataFrame({
+                    "Önce": df_before[selected_col].dropna(),
+                    "Sonra": df_after[selected_col]
+                }), orient="v", ax=ax)
+                ax.set_title(f"{selected_col} - Eksik Veri Doldurma Öncesi ve Sonrası Boxplot")
+                st.pyplot(fig)
 
             # Histogram
-            fig2, ax2 = plt.subplots()
-            sns.histplot(df_before[selected_col].dropna(), color='blue', label='Önce', kde=True, stat='density')
-            sns.histplot(df_after[selected_col], color='orange', label='Sonra', kde=True, stat='density')
-            ax2.legend()
-            ax2.set_title("Histogram: Eksik Veri Doldurma Öncesi ve Sonrası")
-            st.pyplot(fig2)
+                fig2, ax2 = plt.subplots()
+                sns.histplot(df_before[selected_col].dropna(), color='blue', label='Önce', kde=True, stat='density')
+                sns.histplot(df_after[selected_col], color='orange', label='Sonra', kde=True, stat='density')
+                ax2.legend()
+                ax2.set_title("Histogram: Eksik Veri Doldurma Öncesi ve Sonrası")
+                st.pyplot(fig2)
 
-            # Scatter (diğer bir değişkene göre)
-            other_cols = [col for col in numeric_cols if col != selected_col]
+                # Scatter (diğer bir değişkene göre)
+                other_cols = [col for col in numeric_cols if col != selected_col]
             if other_cols:
                 other_col = other_cols[0]
                 fig3, ax3 = plt.subplots()
