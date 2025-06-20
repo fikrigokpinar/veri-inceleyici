@@ -55,24 +55,25 @@ else:
         "Make Regression (yapay veri)"
     ])
     
-    add_missing = st.checkbox("🔥 Bu veri setine yapay eksik veri ekle (%5)", value=True)
-    
-    df = get_builtin_dataset(dataset_name)
 
-    # Eksik veri ekleme burada opsiyonel
+add_missing = st.checkbox("🔥 Yapay eksik veri ekle", value=True)
+missing_ratio = st.selectbox("Eksik veri oranı (p)", [0.05, 0.10, 0.15, 0.20], index=0, format_func=lambda x: f"%{int(x*100)}")
 
+df = get_builtin_dataset(dataset_name)
 
 if add_missing and not df.empty:
-    numeric_cols = df.select_dtypes(include='number').columns.tolist()
-    n_cols_to_modify = max(1, len(numeric_cols) // 2)  # Sütunların yarısı kadarını seç (en az 1)
-    selected_cols = np.random.choice(numeric_cols, size=n_cols_to_modify, replace=False)
+    n_rows, n_cols = df.shape
+    total_cells = n_rows * n_cols
+    n_missing = int(total_cells * missing_ratio)
 
-    n_rows = df.shape[0]
-    n_missing = max(1, int(n_rows * 0.05))  # Satırların %5’ine eksiklik eklenecek
+    st.write(f"📉 Toplam {total_cells} hücrede, yaklaşık **{n_missing}** adet eksik değer eklenecek.")
 
-    for col in selected_cols:
-        missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
-        df.loc[missing_indices, col] = np.nan
+    # Eksik değerleri yerleştirmek için rastgele hücre seç
+    for _ in range(n_missing):
+        i = np.random.randint(0, n_rows)
+        j = np.random.randint(0, n_cols)
+        df.iat[i, j] = np.nan
+
 
 
 # -------------------- ANALİZ --------------------
