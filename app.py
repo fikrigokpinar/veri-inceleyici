@@ -200,3 +200,32 @@ ax.set_title(f"{selected_cat} - Frekans Dağılımı")
 ax.set_ylabel("Frekans")
 ax.set_xlabel(selected_cat)
 st.pyplot(fig)
+# -------------------- 🔥 Eksik Veri Analizi --------------------
+
+import seaborn as sns
+
+st.subheader("🔥 Eksik Veri Analizi (Isı Haritası ve Tablo)")
+
+missing_counts = df.isnull().sum()
+total_missing = missing_counts.sum()
+
+if total_missing == 0:
+    st.success("Veri kümesinde eksik gözlem yok ✅")
+else:
+    # Eksik değer özeti
+    st.write("📋 Eksik Değer Tablosu")
+    missing_df = pd.DataFrame({
+        "Değişken": missing_counts.index,
+        "Eksik Sayısı": missing_counts.values,
+        "Eksik Oranı (%)": (missing_counts.values / len(df)) * 100
+    })
+    missing_df = missing_df[missing_df["Eksik Sayısı"] > 0]
+    st.dataframe(missing_df)
+
+    # Eksik veri ısı haritası
+    st.write("🗺️ Eksik Değer Isı Haritası")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.heatmap(df.isnull(), cbar=False, yticklabels=False, cmap="viridis", ax=ax)
+    ax.set_title("Veri Kümesinde Eksik Gözlem Haritası")
+    st.pyplot(fig)
+
