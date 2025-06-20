@@ -289,7 +289,6 @@ impute_method = st.selectbox("Bir doldurma yöntemi seçin:", [
 
 # -----------------------------
 # Eksik veri doldurma fonksiyonu
-df_before = df.copy()
 
 def impute_data(df, method):
     df_copy = df.copy()
@@ -392,6 +391,7 @@ def impute_data(df, method):
 
 if df.isnull().sum().sum() > 0:
     if st.button("Eksik Verileri Doldur"):
+        df_before = df.copy()
         df = impute_data(df, impute_method)
         df_after = df.copy()
         st.success("✔ Eksik veriler dolduruldu.")
