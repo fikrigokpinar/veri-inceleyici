@@ -436,13 +436,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Karşılaştırmalı grafikler için önce veri kontrolü
+# Karşılaştırmalı grafikler için önce veri kontrolü
 if "df_after" in st.session_state and "df_before" in st.session_state:
     df_after = st.session_state["df_after"]
     df_before = st.session_state["df_before"]
-    
+
     st.subheader("📊 Eksik Veri Doldurma Öncesi ve Sonrası Karşılaştırma")
 
-    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+    # Ortak sayısal sütunları al
+    numeric_cols = df_after.select_dtypes(include='number').columns
+    numeric_cols = [col for col in numeric_cols if col in df_before.columns]
 
     if numeric_cols:
         selected_col = st.selectbox("Karşılaştırmak istediğiniz sayısal sütunu seçin:", numeric_cols)
@@ -453,16 +456,12 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
         if not filled_values.empty:
             # Boxplot
             fig, ax = plt.subplots(figsize=(8, 5))
-
-            # Eksik veriler doldurulmadan önceki ve sonraki dağılımları yan yana çiz
             sns.boxplot(data=pd.DataFrame({
-            "Önce": df_before[selected_col].dropna(),
-            "Sonra": df_after[selected_col]
-                }), orient="v", ax=ax)
-
+                "Önce": df_before[selected_col].dropna(),
+                "Sonra": df_after[selected_col]
+            }), orient="v", ax=ax)
             ax.set_title(f"{selected_col} - Eksik Veri Doldurma Öncesi ve Sonrası Boxplot")
             st.pyplot(fig)
-
 
             # Histogram
             fig2, ax2 = plt.subplots()
@@ -473,8 +472,9 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
             st.pyplot(fig2)
 
             # Scatter (diğer bir değişkene göre)
-            if len(numeric_cols) > 1:
-                other_col = [col for col in numeric_cols if col != selected_col][0]
+            other_cols = [col for col in numeric_cols if col != selected_col]
+            if other_cols:
+                other_col = other_cols[0]
                 fig3, ax3 = plt.subplots()
                 ax3.scatter(df_before[other_col], df_before[selected_col], alpha=0.5, label='Önce')
                 ax3.scatter(df_after[other_col], df_after[selected_col], alpha=0.5, label='Sonra')
@@ -486,7 +486,7 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
         else:
             st.info("Bu değişkende eksik veri yoktu, karşılaştırma yapılacak veri bulunamadı.")
     else:
-        st.warning("Karşılaştırma için sayısal değişken bulunamadı.")
+        st.warning("Karşılaştırma için uygun sayısal değişken bulunamadı.")
 else:
     st.info("Eksik veri doldurulmadan önce-sonra karşılaştırması yapılamaz.")
 
