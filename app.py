@@ -289,6 +289,7 @@ impute_method = st.selectbox("Bir doldurma yöntemi seçin:", [
 
 # -----------------------------
 # Eksik veri doldurma fonksiyonu
+df_before = df.copy()
 
 def impute_data(df, method):
     df_copy = df.copy()
@@ -392,5 +393,50 @@ def impute_data(df, method):
 if df.isnull().sum().sum() > 0:
     if st.button("Eksik Verileri Doldur"):
         df = impute_data(df, impute_method)
+        df_after = df.copy()
         st.success("✔ Eksik veriler dolduruldu.")
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+st.subheader("📊 Eksik Veri Doldurma Öncesi ve Sonrası Karşılaştırma")
+
+numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+if numeric_cols:
+    selected_col = st.selectbox("Karşılaştırmak istediğiniz sayısal sütunu seçin:", numeric_cols)
+
+    # Eksik veri olan satırların orijinal halini al
+    mask_missing = df_before[selected_col].isnull()
+    filled_values = df_after.loc[mask_missing, selected_col]
+
+    if not filled_values.empty:
+        fig1, ax1 = plt.subplots()
+        sns.boxplot(data=[df_before[selected_col].dropna(), df_after[selected_col]], ax=ax1)
+        ax1.set_xticklabels(["Önce", "Sonra"])
+        ax1.set_title("Boxplot: Eksik Veri Doldurma Öncesi ve Sonrası")
+        st.pyplot(fig1)
+
+        fig2, ax2 = plt.subplots()
+        sns.histplot(df_before[selected_col].dropna(), color='blue', label='Önce', kde=True, stat='density')
+        sns.histplot(df_after[selected_col], color='orange', label='Sonra', kde=True, stat='density')
+        ax2.legend()
+        ax2.set_title("Histogram: Eksik Veri Doldurma Öncesi ve Sonrası")
+        st.pyplot(fig2)
+
+        # Opsiyonel: scatter bir başka sayısal değişkene göre (varsayalım ilk sayısal kolona karşı)
+        if len(numeric_cols) > 1:
+            other_col = [col for col in numeric_cols if col != selected_col][0]
+            fig3, ax3 = plt.subplots()
+            ax3.scatter(df_before[other_col], df_before[selected_col], alpha=0.5, label='Önce')
+            ax3.scatter(df_after[other_col], df_after[selected_col], alpha=0.5, label='Sonra')
+            ax3.set_xlabel(other_col)
+            ax3.set_ylabel(selected_col)
+            ax3.set_title("Dağılım Grafiği (Scatter): Önce vs Sonra")
+            ax3.legend()
+            st.pyplot(fig3)
+    else:
+        st.info("Bu değişkende eksik veri yoktu, karşılaştırma yapılacak veri bulunamadı.")
+else:
+    st.warning("Karşılaştırma için sayısal değişken bulunamadı.")
 
