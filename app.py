@@ -12,8 +12,7 @@ st.title("📊 Veri Kümesi İnceleyici")
 uploaded_file = st.file_uploader("Bir CSV veya Excel dosyası yükleyin", type=["csv", "xlsx"])
 
 # -------------------- VERİ SEÇİMİ --------------------
-def get_builtin_dataset(name):
-import numpy as np  # Eksiklik için gerekli
+import numpy as np  # En başta olmalı
 
 def get_builtin_dataset(name):
     if name == "Iris (çoklu sınıflandırma)":
@@ -33,10 +32,10 @@ def get_builtin_dataset(name):
     else:
         df = pd.DataFrame()
 
-    # 🔥 Yapay eksiklik ekleyelim (her veri setine %5 eksik veri)
+    # 🔥 Örnek veri ise yapay eksiklik ekle
     if not df.empty:
         n_rows = df.shape[0]
-        n_missing = max(1, int(n_rows * 0.05))  # %5 kadar
+        n_missing = max(1, int(n_rows * 0.05))  # %5 eksik veri
         for col in df.select_dtypes(include='number').columns[:2]:  # sadece ilk 2 sayısal kolonda
             missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
             df.loc[missing_indices, col] = np.nan
