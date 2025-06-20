@@ -13,37 +13,27 @@ uploaded_file = st.file_uploader("Bir CSV veya Excel dosyası yükleyin", type=[
 
 # -------------------- VERİ SEÇİMİ --------------------
 import numpy as np  # En başta olmalı
-
 def get_builtin_dataset(name):
     if name == "Iris (çoklu sınıflandırma)":
-        df = load_iris(as_frame=True).frame
+        return load_iris(as_frame=True).frame
     elif name == "Breast Cancer (ikili sınıflandırma)":
-        df = load_breast_cancer(as_frame=True).frame
+        return load_breast_cancer(as_frame=True).frame
     elif name == "Digits (0-9 sınıflandırma)":
-        df = load_digits(as_frame=True).frame
+        return load_digits(as_frame=True).frame
     elif name == "California Housing (regresyon)":
-        df = fetch_california_housing(as_frame=True).frame
+        return fetch_california_housing(as_frame=True).frame
     elif name == "Blobs (kümeleme)":
         X, y = make_blobs(n_samples=300, centers=4, n_features=2, random_state=42)
-        df = pd.DataFrame(X, columns=["X1", "X2"]).assign(cluster=y)
+        return pd.DataFrame(X, columns=["X1", "X2"]).assign(cluster=y)
     elif name == "Make Regression (yapay veri)":
         X, y = make_regression(n_samples=200, n_features=1, noise=10, random_state=42)
-        df = pd.DataFrame({"X": X.flatten(), "Y": y})
+        return pd.DataFrame({"X": X.flatten(), "Y": y})
     else:
-        df = pd.DataFrame()
-
-    # 🔥 Örnek veri ise yapay eksiklik ekle
-    if not df.empty:
-        n_rows = df.shape[0]
-        n_missing = max(1, int(n_rows * 0.05))  # %5 eksik veri
-        for col in df.select_dtypes(include='number').columns[:2]:  # sadece ilk 2 sayısal kolonda
-            missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
-            df.loc[missing_indices, col] = np.nan
-
-    return df
+        return pd.DataFrame()
 
 
-# -------------------- VERİ YÜKLEME --------------------
+
+# -------------------- VERİ YÜKLEME --------------------# Eğer kullanıcı veri yüklemediyse, örnek veri kullanalım
 if uploaded_file is not None:
     try:
         if uploaded_file.name.endswith('.csv'):
@@ -64,7 +54,20 @@ else:
         "Blobs (kümeleme)",
         "Make Regression (yapay veri)"
     ])
+    
+    add_missing = st.checkbox("🔥 Bu veri setine yapay eksik veri ekle (%5)", value=True)
+    
     df = get_builtin_dataset(dataset_name)
+
+    # Eksik veri ekleme burada opsiyonel
+    if add_missing and not df.empty:
+        import numpy as np
+        n_rows = df.shape[0]
+        n_missing = max(1, int(n_rows * 0.05))
+        for col in df.select_dtypes(include='number').columns[:2]:
+            missing_indices = np.random.choice(df.index, size=n_missing, replace=False)
+            df.loc[missing_indices, col] = np.nan
+
 
 # -------------------- ANALİZ --------------------
 if df is not None and not df.empty:
