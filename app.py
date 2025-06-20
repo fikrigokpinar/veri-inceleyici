@@ -449,11 +449,12 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
 
     if numeric_cols:
         selected_col = st.selectbox("Karşılaştırmak istediğiniz sayısal sütunu seçin:", numeric_cols)
+        if selected_col in df_before.columns:
 
-        mask_missing = df_before[selected_col].isnull()
-        filled_values = df_after.loc[mask_missing, selected_col]
+            mask_missing = df_before[selected_col].isnull()
+            filled_values = df_after.loc[mask_missing, selected_col]
 
-        if not filled_values.empty:
+            if not filled_values.empty:
             # Boxplot
             fig, ax = plt.subplots(figsize=(8, 5))
             sns.boxplot(data=pd.DataFrame({
