@@ -171,27 +171,32 @@ else:
         st.warning("Bu kombinasyon için uygun grafik belirlenemedi.")
 
     st.pyplot(fig)
-
-# -------------------- 📊 Kategorik Değişken Frekans Tabloları --------------------
+# -------------------- 📋 Kategorik Değişken Frekans Tabloları (Manuel Seçim Dahil) --------------------
 
 st.subheader("📋 Kategorik Değişken Frekans Tabloları")
 
-cat_cols = df.select_dtypes(include='object').columns.tolist()
+# Otomatik öneri (nunique ≤ 20, float olmayanlar)
+auto_cat_candidates = [
+    col for col in df.columns
+    if df[col].nunique() <= 20 and not pd.api.types.is_float_dtype(df[col])
+]
 
-if not cat_cols:
-    st.info("Veri kümesinde kategorik (object) türünde değişken bulunamadı.")
-else:
-    selected_cat = st.selectbox("Bir kategorik değişken seçin:", cat_cols, key="cat_freq")
+st.info(f"⚙️ Otomatik önerilen kategorik değişkenler: {', '.join(auto_cat_candidates) if auto_cat_candidates else 'Yok'}")
 
-    freq_table = df[selected_cat].value_counts().reset_index()
-    freq_table.columns = [selected_cat, "Frekans"]
+# Tüm değişkenleri seçilebilir hale getir (kullanıcı isterse override etsin)
+selected_cat = st.selectbox("Frekans analizi için bir değişken seçin:", df.columns, key="cat_freq_any")
 
-    st.write("📊 Frekans Tablosu")
-    st.dataframe(freq_table)
+# Frekans tablosunu oluştur ve göster
+freq_table = df[selected_cat].value_counts().reset_index()
+freq_table.columns = [selected_cat, "Frekans"]
 
-    fig, ax = plt.subplots()
-    freq_table.plot(kind='bar', x=selected_cat, y="Frekans", ax=ax, legend=False, color='orange', edgecolor='black')
-    ax.set_title(f"{selected_cat} - Frekans Dağılımı")
-    ax.set_ylabel("Frekans")
-    ax.set_xlabel(selected_cat)
-    st.pyplot(fig)
+st.write("📊 Frekans Tablosu")
+st.dataframe(freq_table)
+
+# Grafikle göster
+fig, ax = plt.subplots()
+freq_table.plot(kind='bar', x=selected_cat, y="Frekans", ax=ax, legend=False, color='orange', edgecolor='black')
+ax.set_title(f"{selected_cat} - Frekans Dağılımı")
+ax.set_ylabel("Frekans")
+ax.set_xlabel(selected_cat)
+st.pyplot(fig)
