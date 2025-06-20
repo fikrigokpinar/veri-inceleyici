@@ -120,3 +120,54 @@ else:
     st.warning("Bu kombinasyon için uygun grafik belirlenemedi.")
 
 st.pyplot(fig)
+
+# -------------------- 📊 Bağımsız Değişkenler Arası Grafik --------------------
+
+st.subheader("📊 Bağımsız Değişkenler Arası Görselleştirme")
+
+# Hedef değişkeni hariç tüm sütunlar
+feature_cols = [col for col in df.columns if col != target]
+
+if len(feature_cols) < 2:
+    st.warning("En az iki bağımsız değişken gerekli.")
+else:
+    b1 = st.selectbox("Bağımsız değişken 1 (B₁):", feature_cols, key="b1_select")
+    remaining = [c for c in feature_cols if c != b1]
+    b2 = st.selectbox("Bağımsız değişken 2 (B₂):", remaining, key="b2_select")
+
+    b1_type = 'S' if pd.api.types.is_numeric_dtype(df[b1]) else 'K'
+    b2_type = 'S' if pd.api.types.is_numeric_dtype(df[b2]) else 'K'
+
+    fig, ax = plt.subplots()
+
+    if b1_type == 'S' and b2_type == 'S':
+        st.markdown("📌 B₁ ve B₂ ikisi de **sürekli** → Scatterplot")
+        ax.scatter(df[b1], df[b2], alpha=0.6)
+        ax.set_xlabel(b1)
+        ax.set_ylabel(b2)
+        ax.set_title(f"{b1} vs {b2}")
+
+    elif b1_type == 'K' and b2_type == 'S':
+        st.markdown("📌 B₁ kategorik, B₂ sürekli → Kategorilere göre Boxplot")
+        df.boxplot(column=b2, by=b1, ax=ax)
+        ax.set_title(f"{b2} by {b1}")
+        plt.suptitle('')
+
+    elif b1_type == 'S' and b2_type == 'K':
+        st.markdown("📌 B₁ sürekli, B₂ kategorik → Kategorilere göre Boxplot")
+        df.boxplot(column=b1, by=b2, ax=ax)
+        ax.set_title(f"{b1} by {b2}")
+        plt.suptitle('')
+
+    elif b1_type == 'K' and b2_type == 'K':
+        st.markdown("📌 B₁ ve B₂ ikisi de **kategorik** → Gruplu çubuk grafik")
+        counts = df.groupby([b1, b2]).size().unstack().fillna(0)
+        counts.plot(kind='bar', ax=ax)
+        ax.set_ylabel("Frekans")
+        ax.set_title(f"{b1} ve {b2} dağılımı")
+        st.pyplot(fig)
+        st.stop()
+    else:
+        st.warning("Bu kombinasyon için uygun grafik belirlenemedi.")
+
+    st.pyplot(fig)
