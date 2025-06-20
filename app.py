@@ -68,19 +68,55 @@ if df is not None and not df.empty:
     st.write(df.dtypes)
 
     # -------------------- GRAFİK --------------------
-    st.subheader("📊 Grafiksel Görselleştirme")
-    num_cols = df.select_dtypes(include='number').columns.tolist()
-    if len(num_cols) > 0:
-        selected_col = st.selectbox("Bir sayısal değişken seçin:", num_cols)
-        chart_type = st.radio("Grafik türü seçin:", ("Histogram", "Boxplot"))
+    # -------------------- 🎯 Hedef Seçimi + Grafik --------------------
 
-        fig, ax = plt.subplots()
-        if chart_type == "Histogram":
-            ax.hist(df[selected_col].dropna(), bins=20, color='skyblue', edgecolor='black')
-            ax.set_title(f"{selected_col} - Histogram")
-        else:
-            ax.boxplot(df[selected_col].dropna(), vert=False)
-            ax.set_title(f"{selected_col} - Boxplot")
-        st.pyplot(fig)
-    else:
-        st.info("Grafik için uygun sayısal sütun bulunamadı.")
+st.subheader("🎯 Hedef ve Bağımsız Değişken Analizi")
+
+# Otomatik öneri (son sütun)
+guessed_target = df.columns[-1]
+st.info(f"⚠️ Önerilen hedef değişken: `{guessed_target}` (değiştirebilirsiniz)")
+
+# Hedef değişken seçimi
+target = st.selectbox("Hedef değişkeni (H) seçin:", df.columns, index=len(df.columns) - 1)
+
+# Hedef dışındaki sütunları seçtir
+remaining_cols = [col for col in df.columns if col != target]
+selected_b = st.selectbox("Bağımsız değişken (B) seçin:", remaining_cols)
+
+# Tür kontrolü
+target_type = 'S' if pd.api.types.is_numeric_dtype(df[target]) else 'K'
+b_type = 'S' if pd.api.types.is_numeric_dtype(df[selected_b]) else 'K'
+
+fig, ax = plt.subplots()
+
+if target_type == 'S' and b_type == 'S':
+    st.markdown("📌 H ve B ikisi de **sürekli** → Scatterplot")
+    ax.scatter(df[selected_b], df[target], alpha=0.6)
+    ax.set_xlabel(selected_b)
+    ax.set_ylabel(target)
+    ax.set_title(f"{selected_b} vs {target}")
+
+elif target_type == 'S' and b_type == 'K':
+    st.markdown("📌 H sürekli, B kategorik → Kategorilere göre Boxplot")
+    df.boxplot(column=target, by=selected_b, ax=ax)
+    ax.set_title(f"{target} by {selected_b}")
+    plt.suptitle('')
+
+elif target_type == 'K' and b_type == 'S':
+    st.markdown("📌 H kategorik, B sürekli → Kategorilere göre Boxplot")
+    df.boxplot(column=selected_b, by=target, ax=ax)
+    ax.set_title(f"{selected_b} by {target}")
+    plt.suptitle('')
+
+elif target_type == 'K' and b_type == 'K':
+    st.markdown("📌 H ve B ikisi de **kategorik** → Gruplu çubuk grafik")
+    counts = df.groupby([selected_b, target]).size().unstack().fillna(0)
+    counts.plot(kind='bar', ax=ax)
+    ax.set_ylabel("Frekans")
+    ax.set_title(f"{selected_b} ve {target} dağılımı")
+    st.pyplot(fig)
+    st.stop()
+else:
+    st.warning("Bu kombinasyon için uygun grafik belirlenemedi.")
+
+st.pyplot(fig)
