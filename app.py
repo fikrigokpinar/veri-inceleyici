@@ -495,3 +495,21 @@ if "df_complete" in st.session_state and "df_with_nan" in st.session_state:
 else:
     st.info("Bu karşılaştırma yalnızca örnek veri kümesinde eksik değerler yapay olarak eklendiğinde mümkündür.")
 
+
+# -------------------- 📈 Korelasyon Analizi --------------------
+st.subheader("📈 Korelasyon Matrisi (Sayılar ve Isı Haritası)")
+
+num_cols = df.select_dtypes(include='number')
+
+if not num_cols.empty:
+    corr = num_cols.corr()
+
+    st.write("📋 Korelasyon Matrisi")
+    st.dataframe(corr)
+
+    st.write("🔍 Korelasyon Isı Haritası")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+    st.pyplot(fig)
+else:
+    st.info("Korelasyon analizi yapılacak sayısal değişken bulunamadı.")
