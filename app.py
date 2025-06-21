@@ -465,35 +465,6 @@ if "df_after" in st.session_state and "df_before" in st.session_state:
 else:
     st.info("Eksik veri doldurulmadan önce-sonra karşılaştırması yapılamaz.")
 
-# -------------------- 📈 Eksik Veri Doldurma Yöntemi Karşılaştırması --------------------
-if "df_complete" in st.session_state and "df_with_nan" in st.session_state:
-    st.subheader("📈 Eksik Veri Doldurma Yöntemlerinin Karşılaştırılması")
-
-    from sklearn.impute import SimpleImputer
-
-    methods = {
-        "Ortalama": SimpleImputer(strategy="mean"),
-        "Medyan": SimpleImputer(strategy="median"),
-        "KNN": KNNImputer(n_neighbors=3),
-        "Iterative (BayesianRidge)": IterativeImputer(random_state=0),
-        "Random Forest": IterativeImputer(estimator=RandomForestRegressor(n_estimators=10, random_state=0), random_state=0),
-        "XGBoost": IterativeImputer(estimator=XGBRegressor(n_estimators=10, verbosity=0, random_state=0), random_state=0)
-    }
-
-    df_full = st.session_state["df_complete"]
-    df_with_nan = st.session_state["df_with_nan"]
-
-    with st.spinner("Yöntemler test ediliyor..."):
-        comparison_df = compare_imputation_methods(df_full, df_with_nan, methods)
-        summary = comparison_df.groupby("Yöntem")[["MAE", "MSE", "MAPE (%)"]].mean().sort_values("MAE")
-
-    st.markdown("### 📋 Detaylı Karşılaştırma")
-    st.dataframe(comparison_df)
-
-    st.markdown("### 🏆 Ortalama Performans Karşılaştırması")
-    st.dataframe(summary)
-else:
-    st.info("Bu karşılaştırma yalnızca örnek veri kümesinde eksik değerler yapay olarak eklendiğinde mümkündür.")
 
 
 # -------------------- 📈 Korelasyon Analizi --------------------
